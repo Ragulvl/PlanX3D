@@ -1,4 +1,4 @@
-﻿# PlanX3D ðŸ ðŸ“âž¡ï¸ðŸ—ï¸
+﻿# PlanX3D 
 
 Convert your 2D architectural blueprints into stunning 3D models with ease!
 
