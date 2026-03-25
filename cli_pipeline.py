@@ -49,7 +49,7 @@ def create_blender_project(data_paths):
                 "-noaudio",  # this is a dockerfile ubuntu hax fix
                 "--background",
                 "--python",
-                "./Blender/blender_export_any.py",
+                "./Blender/export_format_converter.py",
                 "." + target_path,
                 outformat,
                 target_base + outformat,

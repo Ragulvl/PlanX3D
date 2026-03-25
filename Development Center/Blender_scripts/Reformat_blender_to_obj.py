@@ -13,7 +13,7 @@ check_output(
         "--background",
         program_path + "/floorplan.blend",
         "--python",
-        program_path + "/Blender/blender_export_obj_script.py",
+        program_path + "/Blender/export_obj_only.py",
         program_path + "/result.obj",
     ]
 )

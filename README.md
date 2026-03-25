@@ -1,4 +1,4 @@
-﻿# PlanX3D 
+# PlanX3D 
 
 Convert your 2D architectural blueprints into stunning 3D models with ease!
 
@@ -35,7 +35,7 @@ Try our tool without installation! Visit our [Online Demo](demovideo) to see it 
    ```
    python -m venv venv
    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   pip install -r requirements.txt
+   pip install -r requirements_core.txt
    ```
 
 3. **Run the conversion script**

@@ -64,7 +64,7 @@ class Create(Process):
         # Set other paths (don't need to change these)
         program_path = os.getcwd()
 
-        blender_script_path = "../Blender/floorplan_to_3dObject_in_blender.py"
+        blender_script_path = "../Blender/build_3d_scene.py"
 
         # print(program_path, blender_script_path)
 
@@ -128,7 +128,7 @@ class Create(Process):
                 "-noaudio",  # this is a dockerfile ubuntu hax fix
                 "--background",
                 "--python",
-                "../Blender/blender_export_any.py",
+                "../Blender/export_format_converter.py",
                 "./storage/objects/" + self.process["in"] + ".blend",
                 self.process["format"],
                 "./storage/objects/" + self.process["out"],

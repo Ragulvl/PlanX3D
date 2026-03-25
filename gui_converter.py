@@ -105,7 +105,7 @@ class ConversionWorker(QThread):
                 raise Exception("Blender installation invalid")
             
             # Test script exists
-            script_path = "Blender/floorplan_to_3dObject_in_blender.py"
+            script_path = "Blender/build_3d_scene.py"
             if not os.path.exists(script_path):
                 raise Exception(f"Blender script not found: {script_path}")
                 
@@ -117,7 +117,7 @@ class ConversionWorker(QThread):
         """Create .blend file using Blender"""
         try:
             # Use the existing Blender script from the project
-            blender_script = "Blender/floorplan_to_3dObject_in_blender.py"
+            blender_script = "Blender/build_3d_scene.py"
             if not os.path.exists(blender_script):
                 # Fallback to any available Blender script
                 blender_scripts = list(Path("Blender").glob("*.py"))
