@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from PySide6.QtGui import QPixmap, QDragEnterEvent, QDropEvent, QFont
-from PySide6.QtCore import QMimeData
 
 # Import the backend logic
 from FloorplanToBlenderLib.execution import simple_single
@@ -127,10 +126,6 @@ class ConversionWorker(QThread):
                 else:
                     raise Exception("No Blender script found")
             
-            print(f"DEBUG: Using Blender script: {blender_script}")
-            print(f"DEBUG: Data path: {data_path}")
-            print(f"DEBUG: Target file: {target_file}")
-            print(f"DEBUG: Program path: {Path.cwd()}")
             
             # Run Blender to create the .blend file
             # The script expects: program_path, target_path, data_paths
@@ -147,16 +142,12 @@ class ConversionWorker(QThread):
                 str(data_path)     # Data path
             ], check=True, capture_output=True, text=True)
             
-            print(f"DEBUG: Blender stdout: {result.stdout}")
-            print(f"DEBUG: Blender stderr: {result.stderr}")
             
         except subprocess.CalledProcessError as e:
             error_msg = f"Blender execution failed: {e.stderr}"
-            print(f"DEBUG: {error_msg}")
             raise Exception(error_msg)
         except Exception as e:
             error_msg = f"Failed to create .blend file: {str(e)}"
-            print(f"DEBUG: {error_msg}")
             raise Exception(error_msg)
 
 
@@ -390,7 +381,7 @@ class MainWindow(QMainWindow):
                 result = subprocess.run(['where', 'blender'], capture_output=True, text=True)
                 if result.returncode == 0:
                     self.blender_path = result.stdout.strip().split('\n')[0]
-            except:
+            except Exception:
                 pass
                 
     def browse_file(self):

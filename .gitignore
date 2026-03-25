@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 build/
 .venv/
@@ -11,3 +11,5 @@ Thumbs.db
 rewrite_history.ps1
 rewrite_history.log
 *.blend
+Data/[0-9]*/
+*.map

@@ -7,7 +7,7 @@ from FloorplanToBlenderLib import (
     dialog,
     floorplan,
     stacking,
-)  # floorplan to blender lib 
+)  
 
 import os
 
@@ -61,11 +61,7 @@ def create_blender_project(data_paths):
 
 
 if __name__ == "__main__":
-    """
-
-    """
     
-    image_path = ""
     blender_install_path = ""
     data_folder = const.BASE_PATH
     target_folder = const.TARGET_PATH

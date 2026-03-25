@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from . import image
 from . import const
-from . import image
 from . import calculate
 from . import transform
 import math
@@ -412,28 +411,7 @@ def feature_match(img1, img2):
             origin, pos1_model, math.radians(ang)
         )
 
-        # calculate scale, and rescale model
-        """
-        # TODO: fix this scaling problem!
-        new_cap1 = rotate(origin, pos1_cap, math.radians(ang))
-        new_cap2 = rotate(origin, pos2_cap, math.radians(ang))
-        new_model1 = rotate(origin, pos1_model, math.radians(ang))
-        new_model2 = rotate(origin, pos2_model, math.radians(ang))
 
-        cap_size = [(new_cap1[0]- new_cap2[0]), (new_cap1[1]- new_cap2[1])]
-        model_size = [(new_model1[0]-new_model2[0]),(new_model1[1]-new_model2[1])]
-        
-        
-        if cap_size[1] != 0 or model_size[1] != 0:
-            x_scale = abs(cap_size[0]/model_size[0])
-            y_scale = abs(cap_size[1]/model_size[1])
-            print(x_scale, y_scale)
-            scaled_upper_left = scale_model_point_to_origin( origin, new_upper_left,x_scale, y_scale)
-            #scaled_upper_right = scale_model_point_to_origin( origin, new_upper_right,x_scale, y_scale)
-            #scaled_down = scale_model_point_to_origin( origin, new_down,x_scale, y_scale)
-            scaled_pos1_model = scale_model_point_to_origin( origin, new_pos1_model,x_scale, y_scale)
-        else:
-        """
         scaled_upper_left = new_upper_left
         scaled_upper_right = new_upper_right
         scaled_down = new_down
