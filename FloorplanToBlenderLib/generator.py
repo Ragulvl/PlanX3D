@@ -1,3 +1,10 @@
+"""
+Generator
+Abstract base and concrete generator classes that convert detected
+2D features (walls, floors, rooms, doors, windows) into 3D vertex/face
+data and persist them to disk.
+"""
+
 import abc
 import cv2
 import logging
@@ -304,8 +311,8 @@ class Door(Generator):
         if info:
             print("Doors created : ", int(door_amount / 4))
 
-        IO.save_to_file(self.path + "door_vertical_verts", self.verts, info)
-        IO.save_to_file(self.path + "door_vertical_faces", self.faces, info)
+        IO.save_to_file(self.path + const.DOOR_VERTICAL_VERTS, self.verts, info)
+        IO.save_to_file(self.path + const.DOOR_VERTICAL_FACES, self.faces, info)
 
         self.verts, self.faces, door_amount = transform.create_4xn_verts_and_faces(
             boxes=door_contours,
@@ -317,16 +324,16 @@ class Door(Generator):
         )
 
         # One solution to get data to blender is to write and read from file.
-        IO.save_to_file(self.path + "door_horizontal_verts", self.verts, info)
-        IO.save_to_file(self.path + "door_horizontal_faces", self.faces, info)
+        IO.save_to_file(self.path + const.DOOR_HORIZONTAL_VERTS, self.verts, info)
+        IO.save_to_file(self.path + const.DOOR_HORIZONTAL_FACES, self.faces, info)
 
         return self.get_shape(self.verts)
 
 
 
 class Window(Generator):
-    # TODO: also fill small gaps between windows and walls
-    # TODO: also add verts for filling gaps
+    # Known limitation: does not fill small gaps between windows and walls
+    # Known limitation: does not add verts for filling gaps
 
     def __init__(self, gray, path, image_path, scale_factor, scale, info=False, **kwargs):
         self.image_path = image_path

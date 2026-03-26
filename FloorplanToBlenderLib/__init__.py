@@ -1,15 +1,9 @@
 """
-FloorplanToBlender3d
-This file create python package
-Example usage of package :
-from FloorplanToBlenderLib import * # floorplan to blender lib
-detect...
-generate...
-IO...
-transform...
-dialog...
-execution...
+FloorplanToBlenderLib
+Python package for converting 2D floorplan images into 3D Blender models.
 
+Provides computer-vision detection (walls, rooms, doors, windows),
+3D geometry generation, and Blender project orchestration.
 """
 
 __all__ = [
@@ -27,4 +21,5 @@ __all__ = [
     "config",
     "stacking",
     "floorplan",
+    "exceptions",
 ]

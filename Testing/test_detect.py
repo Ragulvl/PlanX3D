@@ -15,30 +15,34 @@ gray = np.ones((height, width), dtype=np.uint8)
 
 
 def test_wall_filter():
-    _ = detect.wall_filter(gray)
-    assert True
+    result = detect.wall_filter(gray)
+    assert isinstance(result, np.ndarray)
+    assert result.shape == (height, width)
 
 
 def test_precise_boxes():
-    _ = detect.precise_boxes(gray)
-    assert True
+    boxes, out = detect.precise_boxes(gray)
+    assert isinstance(boxes, list)
 
 
 def test_find_room():
-    _ = detect.find_rooms(gray)
-    assert True
+    components, img = detect.find_rooms(gray)
+    assert isinstance(components, list)
+    assert isinstance(img, np.ndarray)
 
 
 def test_and_remove_precise_boxes():
-    _ = detect.and_remove_precise_boxes(gray)
-    assert True
+    boxes, out = detect.and_remove_precise_boxes(gray)
+    assert isinstance(boxes, list)
 
 
 def test_outer_contours():
-    _ = detect.outer_contours(gray)
-    assert True
+    contour, out = detect.outer_contours(gray)
+    assert isinstance(contour, np.ndarray)
+    assert contour.ndim >= 2
 
 
 def test_find_details():
-    _ = detect.find_details(gray)
-    assert True
+    components, img = detect.find_details(gray)
+    assert isinstance(components, list)
+    assert isinstance(img, np.ndarray)

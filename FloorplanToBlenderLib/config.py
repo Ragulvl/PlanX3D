@@ -1,25 +1,21 @@
+"""
+Config
+Functions for reading, generating, and updating INI-based config files.
+"""
+
 import configparser
 import logging
 import os
 import cv2
 import json
+from typing import Any, Optional
 
 from . import IO
 from . import const
 from . import calculate
+from .exceptions import ConfigError
 
 logger = logging.getLogger(__name__)
-
-"""
-Config
-This file contains functions for handling config files.
-
-FloorplanToBlender3d
-"""
-# TODO: settings for coloring all objects
-# TODO: add config security check, before start up!
-# TODO: safe read, use this func instead of repeating code everywhere!
-# TODO: add blender path addition to system.ini
 
 
 def read_calibration(floorplan):
@@ -132,19 +128,32 @@ def get_all(path):
     return get(path)
 
 
-def get(config_path, *args):
+def get(config_path: str, *args: str) -> Any:
     """
-    Read and return values
-    @Return default values
+    Read and return config values.
+
+    @Param config_path: path to the INI file
+    @Param args: optional section/key path to drill into
+    @Return: ConfigParser object or a section proxy
+    @Raises ConfigError: if the file cannot be parsed or a key is missing
     """
     conf = configparser.ConfigParser()
 
     if not file_exist(config_path):
         generate_file()
-    conf.read(config_path)
 
-    for key in args:
-        conf = conf[key]
+    try:
+        conf.read(config_path)
+    except configparser.Error as exc:
+        raise ConfigError(f"Malformed config file '{config_path}': {exc}") from exc
+
+    try:
+        for key in args:
+            conf = conf[key]
+    except KeyError as exc:
+        raise ConfigError(
+            f"Missing key {exc} in config file '{config_path}'"
+        ) from exc
 
     return conf
 

@@ -1,27 +1,38 @@
+"""
+Generate
+Orchestrates full 3D data generation from a parsed floorplan image.
+Delegates geometry creation to generator classes (Floor, Wall, Room, etc.)
+and persists transform metadata to disk.
+"""
+
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+
 from . import IO
 from . import const
 from . import transform
 from . import detect
-import numpy as np
-
-from FloorplanToBlenderLib.generator import Door, Floor, Room, Wall, Window
+from .generator import Door, Floor, Room, Wall, Window
 
 def generate_all_files(
-    floorplan,
-    info,
-    world_direction=None,
-    world_scale=np.array([1, 1, 1]),
-    world_position=np.array([0, 0, 0]),
-    world_rotation=np.array([0, 0, 0]),
-):
+    floorplan: Any,
+    info: bool,
+    world_direction: Optional[int] = None,
+    world_scale: np.ndarray = np.array([1, 1, 1]),
+    world_position: np.ndarray = np.array([0, 0, 0]),
+    world_rotation: np.ndarray = np.array([0, 0, 0]),
+) -> Tuple[str, List[float]]:
     """
-    Generate all data files
-    @Param image path
-    @Param dir build in negative or positive direction
-    @Param info, boolean if should be printed
-    @Param position, vector of float
-    @Param rotation, vector of float
-    @Return path to generated file, shape
+    Generate all 3D data files for a single floorplan.
+
+    @Param floorplan: Floorplan instance with image path and feature flags
+    @Param info: if True, print progress info
+    @Param world_direction: build direction (+1 or -1)
+    @Param world_scale: global scale multiplier
+    @Param world_position: global position offset
+    @Param world_rotation: global rotation offset
+    @Return: (path_to_generated_data, shape)
     """
     if world_direction is None:
         world_direction = 1
@@ -112,42 +123,48 @@ def generate_all_files(
     return path, shape
 
 
-def validate_shape(old_shape, new_shape):
+def validate_shape(old_shape: List[float], new_shape: List[float]) -> List[float]:
     """
-    Validate shape, use this to calculate a objects total shape
-    @Param old_shape
-    @Param new_shape
-    @Return total shape
+    Merge two bounding shapes, keeping the maximum extent on each axis.
+
+    @Param old_shape: previous [x, y, z] extents
+    @Param new_shape: new [x, y, z] extents
+    @Return: combined [x, y, z] extents
     """
-    shape = [0, 0, 0]
-    shape[0] = max(old_shape[0], new_shape[0])
-    shape[1] = max(old_shape[1], new_shape[1])
-    shape[2] = max(old_shape[2], new_shape[2])
-    return shape
+    return [
+        max(old_shape[0], new_shape[0]),
+        max(old_shape[1], new_shape[1]),
+        max(old_shape[2], new_shape[2]),
+    ]
 
 
 def generate_transform_file(
-    img_path,
-    path,
-    info,
-    position,
-    world_position,
-    rotation,
-    world_rotation,
-    scale,
-    shape,
-    data_path,
-    origin_path,
-):
+    img_path: str,
+    path: str,
+    info: bool,
+    position: Optional[np.ndarray],
+    world_position: np.ndarray,
+    rotation: Optional[np.ndarray],
+    world_rotation: np.ndarray,
+    scale: Optional[List[float]],
+    shape: Optional[List[float]],
+    data_path: str,
+    origin_path: str,
+) -> Dict[str, Any]:
     """
-    Generate transform of file
-    A transform contains information about an objects position, rotation.
-    @Param img_path
-    @Param info, boolean if should be printed
-    @Param position, position vector
-    @Param rotation, rotation vector
-    @Param shape
-    @Return transform
+    Generate and persist transform metadata (position, rotation, scale, shape).
+
+    @Param img_path: source image path
+    @Param info: if True, log output
+    @Param position: local position vector
+    @Param world_position: global position offset
+    @Param rotation: local rotation vector
+    @Param world_rotation: global rotation offset
+    @Param scale: scale vector
+    @Param shape: bounding shape
+    @Param data_path: path to generated data
+    @Param origin_path: path to original data
+    @Return: transform dictionary
     """
     # create map
     transform = {}

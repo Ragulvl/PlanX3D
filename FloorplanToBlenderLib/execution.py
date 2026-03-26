@@ -1,37 +1,50 @@
+"""
+Execution
+High-level orchestration functions that compose floorplan generation
+into single, axis-stacked, or cylinder-arranged layouts.
+"""
+
 import logging
-from . import generate
+from typing import List, Optional
+
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from math import atan2, degrees
 
+from . import generate
+
 logger = logging.getLogger(__name__)
 
-def simple_single(floorplan, show=True):
+
+def simple_single(floorplan, show: bool = True) -> str:
     """
-    Generate one simple floorplan
-    @Param image_path path to image
-    @Return path to generated files
+    Generate one simple floorplan.
+
+    @Param floorplan: Floorplan instance
+    @Param show: if True, print progress info
+    @Return: path to generated data files
     """
     filepath, _ = generate.generate_all_files(floorplan, show)
     return filepath
 
 
 def multiple_axis(
-    floorplans,
-    axis,
-    dir=1,
-    margin=np.array([0, 0, 0]),
-    worldpositionoffset=np.array([0, 0, 0]),
-    worldrotationoffset=np.array([0, 0, 0]),
-    worldscale=np.array([1, 1, 1]),
-):
+    floorplans: list,
+    axis: str,
+    dir: int = 1,
+    margin: np.ndarray = np.array([0, 0, 0]),
+    worldpositionoffset: np.ndarray = np.array([0, 0, 0]),
+    worldrotationoffset: np.ndarray = np.array([0, 0, 0]),
+    worldscale: np.ndarray = np.array([1, 1, 1]),
+) -> List[str]:
     """
-    Generates several new apartments along axis "x","y","z"
-    @Param pos,rot,sca - offset, rotation and scaling
-    @Param dir - determines +/- direction along axis
-    @Param floorplans - list of path to images
-    @Param horizontal - if apartments should stack horizontal or vertical
-    @Return paths to image data
+    Generate several apartments stacked along an axis ("x", "y", or "z").
+
+    @Param floorplans: list of Floorplan instances
+    @Param axis: "x", "y", or "z"
+    @Param dir: +1 or -1 build direction
+    @Param margin: spacing offset between floors
+    @Return: list of paths to generated data
     """
     # Generate data files
     data_paths = list()
@@ -93,14 +106,15 @@ def multiple_axis(
     return data_paths
 
 
-def rotate_around_axis(axis, vec, degrees):
+def rotate_around_axis(axis: np.ndarray, vec: np.ndarray, degrees: float) -> np.ndarray:
+    """Rotate a vector around an axis by the given number of degrees."""
     rotation_radians = np.radians(degrees)
     rotation_vector = rotation_radians * axis
     rotation = R.from_rotvec(rotation_vector)
     return rotation.apply(vec)
 
 
-def angle_between_points(pointA, pointB):
+def angle_between_points(pointA, pointB) -> float:
     """Calculate angle in degrees between two 2D points."""
     changeInX = pointB[0] - pointA[0]
     changeInY = pointB[1] - pointA[1]
@@ -108,26 +122,24 @@ def angle_between_points(pointA, pointB):
 
 
 def multiple_cylinder(
-    floorplans,
-    amount_per_level,
-    radie,
-    degree,
-    world_direction=None,
-    world_position=np.array([0, 0, 0]),
-    world_rotation=np.array([0, 0, 1]),
-    world_scale=np.array([1, 1, 1]),
-    margin=np.array([0, 0, 0]),
-):
+    floorplans: list,
+    amount_per_level: int,
+    radie: float,
+    degree: float,
+    world_direction: Optional[int] = None,
+    world_position: np.ndarray = np.array([0, 0, 0]),
+    world_rotation: np.ndarray = np.array([0, 0, 1]),
+    world_scale: np.ndarray = np.array([1, 1, 1]),
+    margin: np.ndarray = np.array([0, 0, 0]),
+) -> List[str]:
     """
-    Generates several new apartments in a cylindric shape
-    It is a naive solutions but works for some floorplans
-    @Param pos,rot,sca - offset, rotation and scaling
-    @Param dir - determines +/- direction along y axis
-    @Param image_paths - list of path to images
-    @Param amount_per_level - how many apartments should be added to the circle
-    @Param radie - radie size
-    @Param degree - how many degree should the circle be, 0-360
-    @Return paths to image data
+    Generate several apartments arranged in a cylindrical shape.
+
+    @Param floorplans: list of Floorplan instances
+    @Param amount_per_level: apartments per ring
+    @Param radie: radius of the cylinder
+    @Param degree: arc span in degrees (0–360)
+    @Return: list of paths to generated data
     """
     data_paths = list()
     curr_index = 0

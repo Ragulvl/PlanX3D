@@ -37,7 +37,8 @@ WALL_HEIGHT = 1
 PIXEL_TO_3D_SCALE = 100
 
 # Paths to models
-DOOR_MODEL = "Images/Models/Doors/door.png"  # TODO: make dynamic folder solution, to add more doors!
+# Known limitation: only a single door model is supported
+DOOR_MODEL = "Images/Models/Doors/door.png"
 DOOR_WIDTH = 5
 
 # Data creation
@@ -97,7 +98,8 @@ IMAGE_HCOLOR = 10
 IMAGE_TEMPLATE_SIZE = 7
 IMAGE_SEARCH_SIZE = 21
 
-# DEBUG modes # TODO: implement these!
+# DEBUG modes
+# Known limitation: debug visualisation for each feature type is not yet wired up
 DEBUG_DOOR = False
 DEBUG_WINDOW = False
 DEBUG_FLOOR = False

@@ -1,3 +1,10 @@
+"""
+PlanX3D CLI Pipeline
+Interactive command-line entry point for converting 2D floorplan images
+into 3D Blender projects. Supports single floorplans, config-based
+batches, and stacking files.
+"""
+
 from subprocess import check_output
 from FloorplanToBlenderLib import (
     IO,
@@ -7,14 +14,19 @@ from FloorplanToBlenderLib import (
     dialog,
     floorplan,
     stacking,
-)  
+)
 
 import os
 
 
-
-
-def create_blender_project(data_paths):
+def create_blender_project(
+    data_paths,
+    blender_install_path,
+    target_folder,
+    blender_script_path,
+    program_path,
+):
+    """Build a Blender .blend project from pre-generated data files."""
     if not os.path.exists("." + target_folder):
         os.makedirs("." + target_folder)
 
@@ -24,15 +36,14 @@ def create_blender_project(data_paths):
         IO.get_next_target_base_name(target_base, target_path) + const.BASE_FORMAT
     )
 
-    # Create blender project
     check_output(
         [
             blender_install_path,
-            "-noaudio",  # this is a dockerfile ubuntu hax fix
+            "-noaudio",
             "--background",
             "--python",
             blender_script_path,
-            program_path,  # Send this as parameter to script
+            program_path,
             target_path,
         ]
         + data_paths
@@ -41,12 +52,12 @@ def create_blender_project(data_paths):
     outformat = config.get(
         const.SYSTEM_CONFIG_FILE_NAME, "SYSTEM", const.STR_OUT_FORMAT
     ).replace('"', "")
-    # Transform .blend project to another format!
+
     if outformat != ".blend":
         check_output(
             [
                 blender_install_path,
-                "-noaudio",  # this is a dockerfile ubuntu hax fix
+                "-noaudio",
                 "--background",
                 "--python",
                 "./Blender/export_format_converter.py",
@@ -60,23 +71,19 @@ def create_blender_project(data_paths):
     print("Project created at: " + program_path + target_path)
 
 
-if __name__ == "__main__":
-    
+def main():
+    """Interactive CLI workflow: configure Blender, select images, generate 3D."""
     blender_install_path = ""
     data_folder = const.BASE_PATH
     target_folder = const.TARGET_PATH
     blender_install_path = config.get_default_blender_installation_path()
     floorplans = []
-    image_paths = []
     program_path = os.path.dirname(os.path.realpath(__file__))
     blender_script_path = const.BLENDER_SCRIPT_PATH
     dialog.init()
     data_paths = list()
 
-    # Detect where/if blender is installed on pc
-    auto_blender_install_path = (
-        IO.blender_installed()
-    )  # TODO: add this to system.config!
+    auto_blender_install_path = IO.blender_installed()
 
     if auto_blender_install_path is not None:
         blender_install_path = auto_blender_install_path
@@ -127,17 +134,17 @@ if __name__ == "__main__":
 
         var = input("Do you want to set images to use in each config file? [N/y]: ")
         if var in ["y", "Y"]:
-            for floorplan in floorplans:
+            for fp in floorplans:
                 var = input(
                     "For config file "
-                    + floorplan.conf
+                    + fp.conf
                     + " write path for image to use "
                     + "[Default="
-                    + floorplan.image_path
+                    + fp.image_path
                     + "]:"
                 )
-                if var:  # TODO: test this
-                    floorplan.image_path = var
+                if var:
+                    fp.image_path = var
         print("")
         var = input(
             "This program is about to run and create blender3d project, continue? : "
@@ -168,9 +175,19 @@ if __name__ == "__main__":
 
     if isinstance(data_paths[0], list):
         for paths in data_paths:
-            create_blender_project(paths)
+            create_blender_project(
+                paths, blender_install_path, target_folder,
+                blender_script_path, program_path,
+            )
     else:
-        create_blender_project(data_paths)
+        create_blender_project(
+            data_paths, blender_install_path, target_folder,
+            blender_script_path, program_path,
+        )
 
     print("")
     print("Done, Have a nice day!")
+
+
+if __name__ == "__main__":
+    main()

@@ -456,7 +456,7 @@ def feature_match(img1, img2):
         )
 
     gray = wall_filter(img1)
-    gray = ~gray  # TODO: is it necessary to convert to grayscale again?
+    gray = ~gray  # Known limitation: redundant grayscale conversion may occur here
     rooms, colored_rooms = find_rooms(gray.copy())
     doors, colored_doors = find_details(gray.copy())
     gray_rooms = cv2.cvtColor(colored_doors, cv2.COLOR_BGR2GRAY)
@@ -477,7 +477,7 @@ def feature_match(img1, img2):
 
             if calculate.points_are_inside_or_close_to_box(
                 door, box
-            ):  # TODO: match door with only one box, the closest one!
+            ):  # Known limitation: a door may match multiple boxes; only the first is used
                 is_door = True
                 _door = door
                 break

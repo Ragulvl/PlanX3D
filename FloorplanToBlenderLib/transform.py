@@ -1,3 +1,9 @@
+"""
+Transform
+Geometry transformation utilities for converting 2D contours and boxes
+into 3D vertex/face arrays suitable for Blender mesh generation.
+"""
+
 import logging
 import math
 import cv2
