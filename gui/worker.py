@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Blender version search order (newest first)
 _BLENDER_VERSIONS = [
-    "5.1", "5.0", "4.5", "4.4", "4.3", "4.2", "4.1", "4.0",
+    "5.2", "5.1", "5.0", "4.5", "4.4", "4.3", "4.2", "4.1", "4.0",
     "3.6", "3.5", "3.4", "3.3", "3.2", "3.1", "3.0",
 ]
 
@@ -56,12 +56,14 @@ class ConversionWorker(QThread):
 
     def run(self):
         try:
-            self.progress.emit("Analyzing blueprint geometry...")
+            self.progress.emit("Loading and preprocessing image...")
             fp = floorplan("Configs/default.ini")
             fp.image_path = self.image_path
+
+            self.progress.emit("Detecting walls, rooms & floor geometry...")
             data_path = simple_single(fp, show=False)
 
-            self.progress.emit("Generating 3D model in Blender...")
+            self.progress.emit("Launching Blender to generate 3D model...")
             target_dir = Path("Target")
             target_dir.mkdir(exist_ok=True)
 

@@ -22,16 +22,22 @@ def find_reuseable_data(image_path, path):
     @Param path, path to image
     @Return path to image data, else return None
     """
-    for _, dirs, _ in os.walk(path):
-        for dir in dirs:
-            try:
-                with open(path + dir + const.TRANSFORM_PATH) as f:
-                    data = f.read()
-                js = json.loads(data)
-                if image_path == js[const.STR_IMAGE_PATH]:
-                    return js[const.STR_ORIGIN_PATH], js[const.STR_SHAPE]
-            except IOError:
-                continue
+    if not os.path.exists(path):
+        return None, None
+    try:
+        for entry in os.scandir(path):
+            if entry.is_dir():
+                transform_file = path + entry.name + const.TRANSFORM_PATH
+                try:
+                    with open(transform_file) as f:
+                        data = f.read()
+                    js = json.loads(data)
+                    if image_path == js[const.STR_IMAGE_PATH]:
+                        return js[const.STR_ORIGIN_PATH], js[const.STR_SHAPE]
+                except (IOError, json.JSONDecodeError, KeyError):
+                    continue
+    except OSError:
+        pass
     return None, None
 
 

@@ -18,14 +18,14 @@ logger = logging.getLogger(__name__)
 class Generator(abc.ABC):
     """Base class for 3D geometry generators."""
 
-    def __init__(self, gray: np.ndarray, path: str, scale: List[float], info: bool = False):
+    def __init__(self, gray: np.ndarray, path: str, scale: List[float], info: bool = False, **kwargs):
         self.verts: list = []
         self.faces: list = []
         self.height: float = const.WALL_HEIGHT
         self.pixelscale: int = const.PIXEL_TO_3D_SCALE
         self.scale = np.array(scale) if not isinstance(scale, np.ndarray) else scale
         self.path: str = path
-        self.shape = self.generate(gray, info)
+        self.shape = self.generate(gray, info, **kwargs)
 
     def get_shape(self, verts):
         """
@@ -63,19 +63,21 @@ class Generator(abc.ABC):
         ]
 
     @abc.abstractmethod
-    def generate(self, gray, info=False):
+    def generate(self, gray, info=False, **kwargs):
         """Perform the generation"""
         pass
 
 
 class Floor(Generator):
-    def __init__(self, gray, path, scale, info=False):
-        super().__init__(gray, path, scale, info)
+    def __init__(self, gray, path, scale, info=False, **kwargs):
+        super().__init__(gray, path, scale, info, **kwargs)
 
-    def generate(self, gray, info=False):
+    def generate(self, gray, info=False, **kwargs):
+        contour = kwargs.get('contour')
 
         # detect outer Contours (simple floor or roof solution)
-        contour, _ = detect.outer_contours(gray)
+        if contour is None:
+            contour, _ = detect.outer_contours(gray)
         # Create verts
         self.verts = transform.scale_point_to_vector(
             boxes=contour,
@@ -100,19 +102,23 @@ class Floor(Generator):
 
 
 class Wall(Generator):
-    def __init__(self, gray, path, scale, info=False):
-        super().__init__(gray, path, scale, info)
+    def __init__(self, gray, path, scale, info=False, **kwargs):
+        super().__init__(gray, path, scale, info, **kwargs)
 
-    def generate(self, gray, info=False):
+    def generate(self, gray, info=False, **kwargs):
+        wall_img = kwargs.get('wall_img')
+        contour = kwargs.get('contour')
 
         # create wall image (filter out small objects from image)
-        wall_img = detect.wall_filter(gray)
+        if wall_img is None:
+            wall_img = detect.wall_filter(gray)
 
         # detect walls
         boxes, _ = detect.precise_boxes(wall_img)
 
         # detect contour
-        contour, _ = detect.outer_contours(gray)
+        if contour is None:
+            contour, _ = detect.outer_contours(gray)
 
         # remove walls outside of contour
         boxes = calculate.remove_walls_not_in_contour(boxes, contour)
@@ -148,16 +154,19 @@ class Wall(Generator):
 
 
 class Room(Generator):
-    def __init__(self, gray, path, scale, info=False):
+    def __init__(self, gray, path, scale, info=False, **kwargs):
         self.height = (
             const.WALL_HEIGHT - const.ROOM_FLOOR_DISTANCE
         )  # place room slightly above floor
-        super().__init__(gray, path, scale, info)
+        super().__init__(gray, path, scale, info, **kwargs)
 
-    def generate(self, gray, info=False):
-        gray = detect.wall_filter(gray)
-        gray = ~gray
-        rooms, colored_rooms = detect.find_rooms(gray.copy())
+    def generate(self, gray, info=False, **kwargs):
+        wall_img = kwargs.get('wall_img')
+
+        if wall_img is None:
+            wall_img = detect.wall_filter(gray)
+        gray_filtered = ~wall_img
+        rooms, colored_rooms = detect.find_rooms(gray_filtered.copy())
         gray_rooms = cv2.cvtColor(colored_rooms, cv2.COLOR_BGR2GRAY)
 
         # get box positions for rooms
@@ -180,10 +189,10 @@ class Room(Generator):
 
 
 class Door(Generator):
-    def __init__(self, gray, path, image_path, scale_factor, scale, info=False):
+    def __init__(self, gray, path, image_path, scale_factor, scale, info=False, **kwargs):
         self.image_path = image_path
         self.scale_factor = scale_factor
-        super().__init__(gray, path, scale, info)
+        super().__init__(gray, path, scale, info, **kwargs)
 
     def get_point_the_furthest_away(self, door_features, door_box):
         """
@@ -229,9 +238,10 @@ class Door(Generator):
                     dist = distance
         return (int(best_point[0]), int(best_point[1]))
 
-    def generate(self, gray, info=False):
+    def generate(self, gray, info=False, **kwargs):
+        src_img = kwargs.get('src_img')
 
-        doors = detect.doors(self.image_path, self.scale_factor)
+        doors = detect.doors(self.image_path, self.scale_factor, img=src_img)
 
         door_contours = []
         # get best door shapes!
@@ -279,7 +289,7 @@ class Door(Generator):
 
         if const.DEBUG_DOOR:
             print("Showing DEBUG door. Press any key to continue...")
-            img = draw.contoursOnImage(gray, door_contours)
+            img = draw.contours(gray, door_contours)
             draw.image(img)
 
         # Create verts for door
@@ -313,18 +323,20 @@ class Door(Generator):
         return self.get_shape(self.verts)
 
 
+
 class Window(Generator):
     # TODO: also fill small gaps between windows and walls
     # TODO: also add verts for filling gaps
 
-    def __init__(self, gray, path, image_path, scale_factor, scale, info=False):
+    def __init__(self, gray, path, image_path, scale_factor, scale, info=False, **kwargs):
         self.image_path = image_path
         self.scale_factor = scale_factor
         self.scale = scale
-        super().__init__(gray, path, scale, info)
+        super().__init__(gray, path, scale, info, **kwargs)
 
-    def generate(self, gray, info=False):
-        windows = detect.windows(self.image_path, self.scale_factor)
+    def generate(self, gray, info=False, **kwargs):
+        src_img = kwargs.get('src_img')
+        windows = detect.windows(self.image_path, self.scale_factor, img=src_img)
 
         # Create verts for window, vertical
         v, self.faces, window_amount1 = transform.create_nx4_verts_and_faces(

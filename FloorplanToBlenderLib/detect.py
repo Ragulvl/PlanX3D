@@ -234,22 +234,24 @@ def outer_contours(detect_img, output_img=None, color=None):
     return approx, output_img
 
 
-def doors(image_path, scale_factor):
+def doors(image_path, scale_factor, img=None):
     model = cv2.imread(const.DOOR_MODEL, 0)
-    img = cv2.imread(
-        image_path, 0
-    )  # TODO: it is not very effective to read image again here!
+    if img is None:
+        img = cv2.imread(image_path, 0)
+    elif len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     img = image.cv2_rescale_image(img, scale_factor)
     _, doors = feature_match(img, model)
     return doors
 
 
-def windows(image_path, scale_factor):
+def windows(image_path, scale_factor, img=None):
     model = cv2.imread(const.DOOR_MODEL, 0)
-    img = cv2.imread(
-        image_path, 0
-    )  # TODO: it is not very effective to read image again here!
+    if img is None:
+        img = cv2.imread(image_path, 0)
+    elif len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     img = image.cv2_rescale_image(img, scale_factor)
     windows, _ = feature_match(img, model)
@@ -359,7 +361,7 @@ def feature_match(img1, img2):
         const.WINDOWS_AND_DOORS_FEATURE_TRACK_QUALITY,
         const.WINDOWS_AND_DOORS_FEATURE_TRACK_MIN_DIST,
     )
-    corners = np.int0(corners)
+    corners = np.intp(corners)
 
     # This is still a little hardcoded but still better than before!
     upper_left = corners[1][0]

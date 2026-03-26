@@ -1,6 +1,7 @@
 from . import IO
 from . import const
 from . import transform
+from . import detect
 import numpy as np
 
 from FloorplanToBlenderLib.generator import Door, Floor, Room, Wall, Window
@@ -54,30 +55,35 @@ def generate_all_files(
     if origin_path is None:
         origin_path = path
 
-        _, gray, scale_factor = IO.read_image(floorplan.image_path, floorplan)
+        src_img, gray, scale_factor = IO.read_image(floorplan.image_path, floorplan)
+
+        # ── Pre-compute expensive shared CV results ONCE ──
+        wall_img = detect.wall_filter(gray)
+        contour, _ = detect.outer_contours(gray)
+        shared = dict(wall_img=wall_img, contour=contour, src_img=src_img)
 
         if floorplan.floors:
-            shape = Floor(gray, path, scale, info).shape
+            shape = Floor(gray, path, scale, info, **shared).shape
 
         if floorplan.walls:
             if shape is not None:
-                new_shape = Wall(gray, path, scale, info).shape
+                new_shape = Wall(gray, path, scale, info, **shared).shape
                 shape = validate_shape(shape, new_shape)
             else:
-                shape = Wall(gray, path, scale, info).shape
+                shape = Wall(gray, path, scale, info, **shared).shape
 
         if floorplan.rooms:
             if shape is not None:
-                new_shape = Room(gray, path, scale, info).shape
+                new_shape = Room(gray, path, scale, info, **shared).shape
                 shape = validate_shape(shape, new_shape)
             else:
-                shape = Room(gray, path, scale, info).shape
+                shape = Room(gray, path, scale, info, **shared).shape
 
         if floorplan.windows:
-            Window(gray, path, floorplan.image_path, scale_factor, scale, info)
+            Window(gray, path, floorplan.image_path, scale_factor, scale, info, **shared)
 
         if floorplan.doors:
-            Door(gray, path, floorplan.image_path, scale_factor, scale, info)
+            Door(gray, path, floorplan.image_path, scale_factor, scale, info, **shared)
 
     generate_transform_file(
         floorplan.image_path,

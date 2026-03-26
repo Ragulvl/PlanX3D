@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QStackedWidget,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QColor, QPalette
+from PySide6.QtGui import QPixmap, QColor, QPalette, QIcon
 
 # Import modular GUI components
 from gui.theme import Theme, STYLESHEET
@@ -50,6 +50,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("PlanX3D")
         self.setMinimumSize(1040, 680)
         self.resize(1120, 740)
+
+        # Window icon
+        logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Images", "Logo", "Logo.png")
+        if os.path.exists(logo_path):
+            self.setWindowIcon(QIcon(logo_path))
 
         central = QWidget()
         central.setStyleSheet(f"background: {Theme.BG_BASE}; color: {Theme.TEXT_BODY};")
@@ -99,17 +104,41 @@ class MainWindow(QMainWindow):
 
         # Brand
         brand = QFrame()
-        brand.setFixedHeight(64)
+        brand.setFixedHeight(120)
         brand.setStyleSheet("background: transparent; border: none;")
-        brand_layout = QHBoxLayout(brand)
-        brand_layout.setContentsMargins(16, 0, 16, 0)
-        app_name = QLabel("PlanX3D")
-        app_name.setStyleSheet(f"""
-            font-size: 17px; font-weight: 700; color: {Theme.TEXT_H1};
-            letter-spacing: 0.8px; background: transparent; border: none;
-        """)
-        brand_layout.addWidget(app_name)
-        brand_layout.addStretch()
+        brand_layout = QVBoxLayout(brand)
+        brand_layout.setContentsMargins(12, 12, 12, 8)
+        brand_layout.setAlignment(Qt.AlignCenter)
+
+        # Logo image in sidebar with white background container
+        logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Images", "Logo", "Logo.png")
+        if os.path.exists(logo_path):
+            logo_container = QFrame()
+            logo_container.setStyleSheet("""
+                QFrame {
+                    background: #ffffff;
+                    border-radius: 10px;
+                    border: none;
+                }
+            """)
+            container_layout = QVBoxLayout(logo_container)
+            container_layout.setContentsMargins(8, 6, 8, 6)
+            container_layout.setAlignment(Qt.AlignCenter)
+
+            logo_label = QLabel()
+            logo_pix = QPixmap(logo_path).scaled(140, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label.setPixmap(logo_pix)
+            logo_label.setStyleSheet("background: transparent; border: none;")
+            logo_label.setAlignment(Qt.AlignCenter)
+            container_layout.addWidget(logo_label)
+            brand_layout.addWidget(logo_container)
+        else:
+            app_name = QLabel("PlanX3D")
+            app_name.setStyleSheet(f"""
+                font-size: 17px; font-weight: 700; color: {Theme.TEXT_H1};
+                letter-spacing: 0.8px; background: transparent; border: none;
+            """)
+            brand_layout.addWidget(app_name)
         layout.addWidget(brand)
 
         # Divider
@@ -282,7 +311,7 @@ class MainWindow(QMainWindow):
             }}
             QProgressBar::chunk {{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 {Theme.ACCENT}, stop:1 #8b5cf6);
+                    stop:0 {Theme.ACCENT}, stop:1 #3a6fd8);
                 border-radius: 2px;
             }}
         """)
@@ -765,8 +794,20 @@ class MainWindow(QMainWindow):
 #  Entry Point
 # ─────────────────────────────────────────────────────────────────────────────
 def main():
+    # Tell Windows this is a standalone app (shows our icon in taskbar, not Python's)
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PlanX3D.FloorplanConverter.1.0")
+    except Exception:
+        pass
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+
+    # App-level icon (taskbar, alt-tab, etc.)
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Images", "Logo", "Logo.png")
+    if os.path.exists(logo_path):
+        app.setWindowIcon(QIcon(logo_path))
 
     pal = QPalette()
     pal.setColor(QPalette.Window,          QColor(Theme.BG_BASE))

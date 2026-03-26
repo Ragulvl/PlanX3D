@@ -6,7 +6,7 @@ from . import const
 
 def pil_rescale_image(image, factor):
     width, height = image.size
-    return image.resize((int(width * factor), int(height * factor)), resample=Image.BOX)
+    return image.resize((int(width * factor), int(height * factor)), resample=Image.Resampling.BOX)
 
 
 def cv2_rescale_image(image, factor):

@@ -24,7 +24,7 @@ def make_primary_button(text: str, tooltip: str = "") -> QPushButton:
     btn.setStyleSheet(f"""
         QPushButton {{
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 {Theme.ACCENT}, stop:1 #8b5cf6);
+                stop:0 {Theme.ACCENT}, stop:1 #3a6fd8);
             color: #ffffff;
             border: none;
             border-radius: 8px;
@@ -35,7 +35,7 @@ def make_primary_button(text: str, tooltip: str = "") -> QPushButton:
         }}
         QPushButton:hover {{
             background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                stop:0 {Theme.ACCENT_HOVER}, stop:1 #9b6ff6);
+                stop:0 {Theme.ACCENT_HOVER}, stop:1 #5580e0);
         }}
         QPushButton:pressed {{
             background: {Theme.ACCENT};

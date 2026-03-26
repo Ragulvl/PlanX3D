@@ -152,7 +152,7 @@ DEFAULT_OVERWRITE_DATA = "False"
 MAC_DEFAULT_BLENDER_INSTALL_PATH = "/Applications/Blender.app/Contents/MacOS/Blender"
 LINUX_DEFAULT_BLENDER_INSTALL_PATH = "/usr/local/blender/blender"
 WIN_DEFAULT_BLENDER_INSTALL_PATH = (
-    "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
+    "C:\\Program Files\\Blender Foundation\\Blender 4.2\\blender.exe"
 )
 DEFAULT_MODE = "HVSTACK"
 DEFAULT_FEATURES = True
