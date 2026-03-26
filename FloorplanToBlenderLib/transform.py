@@ -1,8 +1,12 @@
+import logging
 import math
 import cv2
 import numpy as np
+from typing import Any, List, Tuple, Optional
 
 from . import const
+
+logger = logging.getLogger(__name__)
 
 def rescale_rect(list_of_rects, scale_factor):
     """
@@ -43,16 +47,21 @@ def rescale_rect(list_of_rects, scale_factor):
     return rescaled_rects
 
 
-def flatten(in_list):
+def flatten(in_list: list) -> list:
     """
-    Flatten multidim list into single dim array
+    Flatten a multidimensional list into a single-dimension list.
+    Uses an iterative stack to avoid RecursionError on deep nesting.
     """
-    if in_list == []:
-        return []
-    elif type(in_list) is not list:
-        return [in_list]
-    else:
-        return flatten(in_list[0]) + flatten(in_list[1:])
+    stack = [in_list]
+    result = []
+    while stack:
+        current = stack.pop()
+        if isinstance(current, list):
+            # Push children in reverse order so leftmost is processed first
+            stack.extend(reversed(current))
+        else:
+            result.append(current)
+    return result
 
 
 def rotate_round_origin_vector_2d(origin, point, angle):

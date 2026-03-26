@@ -1,7 +1,10 @@
+import logging
 from . import generate
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from math import atan2, degrees
+
+logger = logging.getLogger(__name__)
 
 def simple_single(floorplan, show=True):
     """
@@ -97,7 +100,8 @@ def rotate_around_axis(axis, vec, degrees):
     return rotation.apply(vec)
 
 
-def AngleBtw2Points(pointA, pointB):
+def angle_between_points(pointA, pointB):
+    """Calculate angle in degrees between two 2D points."""
     changeInX = pointB[0] - pointA[0]
     changeInY = pointB[1] - pointA[1]
     return degrees(atan2(changeInY, changeInX))

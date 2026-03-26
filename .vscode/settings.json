@@ -1,0 +1,11 @@
+{
+    "python.defaultInterpreterPath": "C:\\Users\\ragul\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/Server",
+        "C:\\Users\\ragul\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages"
+    ],
+    "pyrefly.enableTypeChecking": false,
+    "pyre2.enable": false,
+    "pyre.enable": false
+}

@@ -1,7 +1,9 @@
 import abc
 import cv2
+import logging
 import math
 import numpy as np
+from typing import List, Optional
 
 from . import detect
 from . import transform
@@ -10,26 +12,20 @@ from . import const
 from . import draw
 from . import calculate
 
+logger = logging.getLogger(__name__)
 
-class Generator:
-    __metaclass__ = abc.ABCMeta
-    # create verts (points 3d), points to use in mesh creations
-    verts = []
-    # create faces for each plane, describe order to create mesh points
-    faces = []
-    # Height of waLL
-    height = const.WALL_HEIGHT
-    # Scale pixel value to 3d pos
-    pixelscale = const.PIXEL_TO_3D_SCALE
-    # Object scale
-    scale = np.array([1, 1, 1])
-    # Index is many for when there are several floorplans
-    path = ""
 
-    def __init__(self, gray, path, scale, info=False):
-        self.path = path
+class Generator(abc.ABC):
+    """Base class for 3D geometry generators."""
+
+    def __init__(self, gray: np.ndarray, path: str, scale: List[float], info: bool = False):
+        self.verts: list = []
+        self.faces: list = []
+        self.height: float = const.WALL_HEIGHT
+        self.pixelscale: int = const.PIXEL_TO_3D_SCALE
+        self.scale = np.array(scale) if not isinstance(scale, np.ndarray) else scale
+        self.path: str = path
         self.shape = self.generate(gray, info)
-        self.scale = scale
 
     def get_shape(self, verts):
         """
@@ -63,7 +59,7 @@ class Generator:
         return [
             (high[0] - low[0]) * self.scale[0],
             (high[1] - low[1]) * self.scale[1],
-            (high[2] - low[2]) ** self.scale[2],
+            (high[2] - low[2]) * self.scale[2],
         ]
 
     @abc.abstractmethod

@@ -1,4 +1,5 @@
 import configparser
+import logging
 import os
 import cv2
 import json
@@ -6,6 +7,8 @@ import json
 from . import IO
 from . import const
 from . import calculate
+
+logger = logging.getLogger(__name__)
 
 """
 Config
@@ -143,10 +146,7 @@ def get(config_path, *args):
     for key in args:
         conf = conf[key]
 
-    if args is None:
-        return conf
-    else:
-        return conf
+    return conf
 
 
 def get_default_image_path():

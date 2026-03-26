@@ -1,10 +1,15 @@
 import cv2
+import logging
+import math
 import numpy as np
+from typing import List, Optional, Tuple
+
 from . import image
 from . import const
 from . import calculate
 from . import transform
-import math
+
+logger = logging.getLogger(__name__)
 
 # Calculate (actual) size of apartment
 
@@ -52,21 +57,19 @@ def wall_filter(gray):
     return unknown
 
 
-def precise_boxes(detect_img, output_img=None, color=[100, 100, 0]):
+def precise_boxes(detect_img, output_img=None, color=None):
     """
-    Detect corners with boxes in image with high precision
-    @Param detect_img image to detect from @mandatory
-    @Param output_img image for output
-    @Param color to set on output
+    Detect corners with boxes in image with high precision.
     @Return corners(list of boxes), output image
-    @source https://stackoverflow.com/questions/50930033/drawing-lines-and-distance-to-them-on-image-opencv-python
     """
-    res = []
+    if color is None:
+        color = [100, 100, 0]
 
     contours, _ = cv2.findContours(
         detect_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
 
+    res = []
     for cnt in contours:
         epsilon = const.PRECISE_BOXES_ACCURACY * cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, epsilon, True)
@@ -118,26 +121,21 @@ def __corners_and_draw_lines(img, corners_threshold, room_closing_max_length):
     return img
 
 
-def find_rooms(
+def _find_connected_components(
     img,
-    noise_removal_threshold=const.FIND_ROOMS_NOISE_REMOVAL_THRESHOLD,
-    corners_threshold=const.FIND_ROOMS_CORNERS_THRESHOLD,
-    room_closing_max_length=const.FIND_ROOMS_CLOSING_MAX_LENGTH,
-    gap_in_wall_min_threshold=const.FIND_ROOMS_GAP_IN_WALL_MIN_THRESHOLD,
+    noise_removal_threshold,
+    corners_threshold,
+    room_closing_max_length,
+    gap_in_wall_min_threshold,
+    gap_in_wall_max_threshold=None,
 ):
     """
-    src: https://stackoverflow.com/questions/54274610/crop-each-of-them-using-opencv-python
+    Shared helper for finding connected components (rooms or details) in a
+    preprocessed grayscale floorplan image.
 
-    @param img: grey scale image of rooms, already eroded and doors removed etc.
-    @param noise_removal_threshold: Minimal area of blobs to be kept.
-    @param corners_threshold: Threshold to allow corners. Higher removes more of the house.
-    @param room_closing_max_length: Maximum line length to add to close off open doors.
-    @param gap_in_wall_threshold: Minimum number of pixels to identify component as room instead of hole in the wall.
-    @return: rooms: list of numpy arrays containing boolean masks for each detected room
-             colored_house: A colored version of the input image, where each room has a random color.
+    Returns a list of boolean masks and a colorized debug image.
     """
     assert 0 <= corners_threshold <= 1
-    # Remove noise left from door removal
 
     mask = image.remove_noise(img, noise_removal_threshold)
     img = ~mask
@@ -146,42 +144,59 @@ def find_rooms(
 
     img, mask = image.mark_outside_black(img, mask)
 
-    # Find the connected components in the house
-    ret, labels = cv2.connectedComponents(img)
+    _, labels = cv2.connectedComponents(img)
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     unique = np.unique(labels)
-    rooms = []
+    components = []
     for label in unique:
         component = labels == label
-        if (
-            img[component].sum() == 0
-            or np.count_nonzero(component) < gap_in_wall_min_threshold
-        ):
-            color = 0
+        pixel_count = np.count_nonzero(component)
+
+        # Determine whether this component is valid
+        is_background = img[component].sum() == 0
+        too_small = pixel_count < gap_in_wall_min_threshold
+        too_large = gap_in_wall_max_threshold is not None and pixel_count > gap_in_wall_max_threshold
+
+        if is_background or too_small or too_large:
+            img[component] = 0
         else:
-            rooms.append(component)
-            color = np.random.randint(0, 255, size=3)
-        img[component] = color
-    return rooms, img
+            components.append(component)
+            img[component] = np.random.randint(0, 255, size=3)
+
+    return components, img
 
 
-def and_remove_precise_boxes(detect_img, output_img=None, color=[255, 255, 255]):
+def find_rooms(
+    img,
+    noise_removal_threshold=const.FIND_ROOMS_NOISE_REMOVAL_THRESHOLD,
+    corners_threshold=const.FIND_ROOMS_CORNERS_THRESHOLD,
+    room_closing_max_length=const.FIND_ROOMS_CLOSING_MAX_LENGTH,
+    gap_in_wall_min_threshold=const.FIND_ROOMS_GAP_IN_WALL_MIN_THRESHOLD,
+):
     """
-    Currently not used in the main implementation
-    Remove contours of detected walls from image
-    @Param detect_img image to detect from @mandatory
-    @Param output_img image for output
-    @Param color to set on output
-    @Return list of boxes, actual image
-    @source https://stackoverflow.com/questions/50930033/drawing-lines-and-distance-to-them-on-image-opencv-python
+    Detect rooms in a preprocessed grayscale floorplan image.
+    @return: (rooms, colored_image)
     """
-    res = []
-    contours, hierarchy = cv2.findContours(
+    return _find_connected_components(
+        img, noise_removal_threshold, corners_threshold,
+        room_closing_max_length, gap_in_wall_min_threshold,
+    )
+
+
+def and_remove_precise_boxes(detect_img, output_img=None, color=None):
+    """
+    Remove contours of detected walls from image.
+    @Return list of boxes, output image
+    """
+    if color is None:
+        color = [255, 255, 255]
+
+    contours, _ = cv2.findContours(
         detect_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
 
+    res = []
     for cnt in contours:
-
         epsilon = const.REMOVE_PRECISE_BOXES_ACCURACY * cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, epsilon, True)
         if output_img is not None:
@@ -191,31 +206,26 @@ def and_remove_precise_boxes(detect_img, output_img=None, color=[255, 255, 255])
     return res, output_img
 
 
-def outer_contours(detect_img, output_img=None, color=[255, 255, 255]):
+def outer_contours(detect_img, output_img=None, color=None):
     """
-    Get the outer side of floorplan, used to get ground
-    @Param detect_img image to detect from @mandatory
-    @Param output_img image for output
-    @Param color to set on output
-    @Return approx, box
-    @Source https://stackoverflow.com/questions/50930033/drawing-lines-and-distance-to-them-on-image-opencv-python
+    Get the outer contour of the floorplan (used to derive ground plane).
+    @Return approx contour, output image
     """
-    ret, thresh = cv2.threshold(
+    if color is None:
+        color = [255, 255, 255]
+
+    _, thresh = cv2.threshold(
         detect_img,
         const.OUTER_CONTOURS_TRESHOLD[0],
         const.OUTER_CONTOURS_TRESHOLD[1],
         cv2.THRESH_BINARY_INV,
     )
 
-    contours, hierarchy = cv2.findContours(
+    contours, _ = cv2.findContours(
         thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
 
-    largest_contour_area = 0
-    for cnt in contours:
-        if cv2.contourArea(cnt) > largest_contour_area:
-            largest_contour_area = cv2.contourArea(cnt)
-            largest_contour = cnt
+    largest_contour = max(contours, key=cv2.contourArea)
 
     epsilon = const.PRECISE_BOXES_ACCURACY * cv2.arcLength(largest_contour, True)
     approx = cv2.approxPolyDP(largest_contour, epsilon, True)
@@ -499,46 +509,13 @@ def find_details(
     gap_in_wall_max_threshold=const.DETAILS_GAP_IN_WALL_THRESHOLD[1],
     gap_in_wall_min_threshold=const.DETAILS_GAP_IN_WALL_THRESHOLD[0],
 ):
-
     """
-    I have copied and changed this function some...
-    origin from
-    https://stackoverflow.com/questions/54274610/crop-each-of-them-using-opencv-python
-    @Param img: grey scale image of rooms, already eroded and doors removed etc.
-    @Param noise_removal_threshold: Minimal area of blobs to be kept.
-    @Param corners_threshold: Threshold to allow corners. Higher removes more of the house.
-    @Param room_closing_max_length: Maximum line length to add to close off open doors.
-    @Param gap_in_wall_threshold: Minimum number of pixels to identify component as room instead of hole in the wall.
-    @Return: rooms: list of numpy arrays containing boolean masks for each detected room
-             colored_house: A colored version of the input image, where each room has a random color.
+    Detect fine-grained details (doors/windows) by connected-component analysis
+    with both min and max size filters.
+    @return: (details, colored_image)
     """
-    assert 0 <= corners_threshold <= 1
-    # Remove noise left from door removal
-
-    mask = image.remove_noise(img, noise_removal_threshold)
-    img = ~mask
-
-    __corners_and_draw_lines(img, corners_threshold, room_closing_max_length)
-
-    img, mask = image.mark_outside_black(img, mask)
-
-    # Find the connected components in the house
-    ret, labels = cv2.connectedComponents(img)
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    unique = np.unique(labels)
-    details = []
-    for label in unique:
-        component = labels == label
-        if (
-            img[component].sum() == 0
-            or np.count_nonzero(component) < gap_in_wall_min_threshold
-            or np.count_nonzero(component) > gap_in_wall_max_threshold
-        ):
-            color = 0
-        else:
-            details.append(component)
-            color = np.random.randint(0, 255, size=3)
-
-        img[component] = color
-
-    return details, img
+    return _find_connected_components(
+        img, noise_removal_threshold, corners_threshold,
+        room_closing_max_length, gap_in_wall_min_threshold,
+        gap_in_wall_max_threshold,
+    )

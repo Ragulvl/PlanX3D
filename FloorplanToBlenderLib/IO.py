@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from shutil import which
 import shutil
@@ -10,6 +11,8 @@ import numpy as np
 from . import const
 from . import image
 from . import config
+
+logger = logging.getLogger(__name__)
 
 
 def find_reuseable_data(image_path, path):
@@ -79,7 +82,7 @@ def read_image(path, floorplan=None):
     # Read floorplan image
     img = cv2.imread(path)
     if img is None:
-        print(f"ERROR: Image {path} could not be read by OpenCV library.")
+        logger.error("Image %s could not be read by OpenCV library.", path)
         raise IOError
 
     scale_factor = 1
@@ -92,9 +95,9 @@ def read_image(path, floorplan=None):
             floorplan.wall_size_calibration = calibrations  # Store for debug
             scale_factor = image.detect_wall_rescale(float(calibrations), img)
             if scale_factor is None:
-                print(
-                    "WARNING: Auto rescale failed due to non good walls found in image."
-                    + "If rescale still is needed, please rescale manually."
+                logger.warning(
+                    "Auto rescale failed — no suitable walls found. "
+                    "If rescale is still needed, please rescale manually."
                 )
                 scale_factor = 1
             else:
@@ -133,7 +136,7 @@ def save_to_file(file_path, data, show=True):
             f.write(json.dumps(data, default=ndarrayJsonDumps))  # little haxy
 
     if show:
-        print("Created file : " + file_path + const.SAVE_DATA_FORMAT)
+        logger.info("Created file: %s%s", file_path, const.SAVE_DATA_FORMAT)
 
 
 def read_from_file(file_path):

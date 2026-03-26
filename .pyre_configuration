@@ -1,0 +1,10 @@
+{
+  "source_directories": ["."],
+  "search_path": [
+    ".",
+    "Server",
+    "C:\\Users\\ragul\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages"
+  ],
+  "python_version": "3.14",
+  "strict": false
+}

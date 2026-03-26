@@ -1,0 +1,12 @@
+{
+    "include": [".", "FloorplanToBlenderLib", "gui", "Server"],
+    "pythonVersion": "3.14",
+    "pythonPlatform": "Windows",
+    "pythonPath": "C:\\Users\\ragul\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "extraPaths": [
+        ".",
+        "Server"
+    ],
+    "typeCheckingMode": "basic",
+    "reportMissingModuleSource": false
+}
