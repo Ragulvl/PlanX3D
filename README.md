@@ -9,6 +9,8 @@ Convert your 2D architectural blueprints into detailed 3D models with ease.
 
 ![PlanX3D 3D Model Preview](Images/Examples/blender_preview.png)
 
+![Blender 3D Output](Blender.jpeg)
+
 ---
 
 ## Project Overview
