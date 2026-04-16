@@ -13,7 +13,7 @@ from typing import Optional
 from PySide6.QtCore import QThread, Signal
 
 from FloorplanToBlenderLib.execution import simple_single
-from FloorplanToBlenderLib.floorplan import floorplan
+from FloorplanToBlenderLib.floorplan import Floorplan
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class ConversionWorker(QThread):
     def run(self):
         try:
             self.progress.emit("Loading and preprocessing image...")
-            fp = floorplan("Configs/default.ini")
+            fp = Floorplan("Configs/default.ini")
             fp.image_path = self.image_path
 
             self.progress.emit("Detecting walls, rooms & floor geometry...")
